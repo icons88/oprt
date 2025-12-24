@@ -1,0 +1,37 @@
+name: Build OpenWrt
+
+on:
+  push:
+    tags:
+      - '*'
+  workflow_dispatch:
+
+env:
+  REPO_URL: https://github.com/coolsnowwolf/lede
+  REPO_BRANCH: master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v3
+    
+    - name: Build OpenWrt
+      uses: docker://openwrtorg/sdk
+      with:
+        args: /bin/bash -c "scripts/build.sh"
+    
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: firmware
+        path: bin/targets/**/*
+    
+    - name: Create Release
+      uses: ncipollo/release-action@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        artifacts: "bin/targets/**/*"
+        token: ${{ secrets.GITHUB_TOKEN }}
